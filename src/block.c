@@ -46,6 +46,7 @@ child_setup_env(struct block *block, struct click *click)
 {
 	child_setenv(block, "BLOCK_NAME", NAME(block));
 	child_setenv(block, "BLOCK_INSTANCE", INSTANCE(block));
+	child_setenv(block, "BLOCK_INTERVAL", INTERVAL(block));
 	child_setenv(block, "BLOCK_BUTTON", click ? click->button : "");
 	child_setenv(block, "BLOCK_X", click ? click->x : "");
 	child_setenv(block, "BLOCK_Y", click ? click->y : "");
@@ -126,11 +127,8 @@ linecpy(char **lines, char *dest, size_t size)
 	if (newline)
 		*newline = '\0';
 
-	/* if text in non-empty, copy it */
-	if (**lines) {
-		strncpy(dest, *lines, size);
-		*lines += strlen(dest);
-	}
+	strncpy(dest, *lines, size);
+	*lines += strlen(dest);
 
 	/* increment if next char is non-null */
 	if (*(*lines + 1))
@@ -161,6 +159,9 @@ block_update_plain_text(struct block *block, char *buf)
 	char *lines = buf;
 
 	linecpy(&lines, props->full_text, sizeof(props->full_text) - 1);
+        if (block->interval == INTER_PERSIST)
+                return;
+
 	linecpy(&lines, props->short_text, sizeof(props->short_text) - 1);
 	linecpy(&lines, props->color, sizeof(props->color) - 1);
 }
