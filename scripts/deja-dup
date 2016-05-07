@@ -14,7 +14,7 @@ let "DAYS=$DIFF / 86400"
 let "HOURS=($DIFF - $DAYS * 86400) / 3600"
 
 if [ "$DAYS" -gt 0 ]; then
-   	echo "${DAYS}d ${HOURS}h"
-	echo "> ${DAYS}d"
+   	echo "${DAYS}d"
+	echo "${DAYS}d"
 	[ "$DAYS" -ge 2 ] && ( [ "$DAYS" -ge 5 ] && echo "#FF0000" || echo "#FFFF00" ) || echo "#FFFFFF"
 fi
