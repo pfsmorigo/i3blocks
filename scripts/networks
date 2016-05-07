@@ -5,7 +5,14 @@ complement() {
 		echo " ($(iwgetid -r))"
 	else
 		SPEED="$(cat /sys/class/net/$1/speed 2> /dev/null)"
-		[ -n "$SPEED" ] && echo " ($SPEED Mbps)"
+		GIGABIT=$(($SPEED/1000))
+
+		#echo -e "\n\n$MEGABIT | $GIGABIT\n\n"
+		if [ "$SPEED" ]; then
+			echo -n " ("
+			[ $GIGABIT -gt 0 ] && echo -n "${GIGABIT}G" || echo -n "${SPEED}M"
+			echo -n ")"
+		fi
 	fi
 }
 
@@ -17,7 +24,8 @@ OLDIFS=$IFS
 IFS=$'\n'
 for IF in $(ip -o -4 a); do
 	NAME=$(echo $IF | awk '{ print $2 }')
-	IP=$(echo $IF | awk '{ print $4 }' | cut -d/ -f1)
+	IP_F=$(echo $IF | awk '{ print $4 }')
+	IP_S=$(echo $IP_F | cut -d/ -f1)
 
 	case $NAME in
 		lo|virbr*|docker*) continue ;;
@@ -27,14 +35,15 @@ for IF in $(ip -o -4 a); do
 		wlp3s0)      ICON= ;; # wireless
 		*)           ICON= ;; # others
 	esac
-	FULL_TEXT+="$IP$(complement $NAME)   "
-	SHORT_TEXT+="$IP   "
+	FULL_TEXT+="$IP_F$(complement $NAME)   "
+	SHORT_TEXT+="$IP_S   "
 done
 IFS=$OLDIFS
 
 if [ -z "$(echo $FULL_TEXT | xargs)" ]; then
-   echo "no networks"
-   exit 33
+   #echo "no networks"
+   #exit 33
+   echo ""
 fi
 
 echo "$FULL_TEXT" | sed 's/^ *//; s/ *$//'
