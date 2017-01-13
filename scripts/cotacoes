@@ -1,18 +1,16 @@
-#!/usr/bin/python
+#!/bin/bash
 
-import urllib2
-import json
-import sys
-import os
-#from pprint import pprint
+wget --quiet -O /tmp/cotacoes http://economia.uol.com.br/cotacoes/cambio/
 
-response = urllib2.urlopen('http://api.promasters.net.br/cotacao/v1/valores')
-data = json.load(response)
-#pprint(data)
+parse_result() {
+	LINE=$(awk -F"<p class=\"cotacao\"> " "{ print $1 }" /tmp/cotacoes \
+		| sed -e 's/<[^>]*>//g')
+	echo $LINE | awk "{ print $2 }"
+}
 
-instance = os.getenv('BLOCK_INSTANCE', '')
+BSP=$(parse_result '$2' '$2 " (" $1 ")"')
+USD=$(parse_result '$3' '$3 " (" $1 ")"')
+ARS=$(parse_result '$4' '$3 " (" $1 ")"')
+EUR=$(parse_result '$5' '$3 " (" $1 ")"')
 
-if instance == '':
-    print 'need: USD, EUR, ARS, GBP  or BTC'
-else:
-    print instance+" "+str(data['valores'][instance]['valor'])
+echo "BSP $BSP  USD $USD  ARS $ARS  EUR $EUR"
