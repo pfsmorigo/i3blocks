@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if ! pgrep -a lsyncd > /dev/null; then
+	echo -e "lsyncd off\n\n#ff0000"
+	exit
+fi
+
+LAST_SUCCESS=$(grep "Finished a list = 0" /tmp/lsyncd_$HOSTNAME.log 2> /dev/null | tail -n 1 | cut -d" " -f1-5)
+[ -z "$LAST_SUCCESS" ] && echo -e "?\n\n#ff0000" && exit
+
+let "SECONDS=$(date +%s) - $(date +%s -d "$LAST_SUCCESS")"
+
+if [ $SECONDS -gt 60 ]; then
+	[ $SECONDS -gt 86000 ] && echo "+1d" || date +"+%kh%M" -u -d "@$SECONDS"
+	echo ""
+	[ $SECONDS -gt 600 ] && echo "#ff0000" || echo "#ffff00"
+fi

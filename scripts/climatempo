@@ -6,13 +6,13 @@ import sys
 import os
 #from pprint import pprint
 
-response = urllib2.urlopen('http://api.promasters.net.br/cotacao/v1/valores')
+response = urllib2.urlopen('http://developers.agenciaideias.com.br/cotacoes/json')
 data = json.load(response)
 #pprint(data)
 
 instance = os.getenv('BLOCK_INSTANCE', '')
 
 if instance == '':
-    print 'need: USD, EUR, ARS, GBP  or BTC'
+    print 'need: dolar, euro or bovespa'
 else:
-    print instance+" "+str(data['valores'][instance]['valor'])
+    print data[instance]['cotacao']+' ('+data[instance]['variacao']+')'

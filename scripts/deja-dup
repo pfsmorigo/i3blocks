@@ -13,8 +13,8 @@ let "DIFF= $(date +%s) - $LAST_BACKUP"
 let "DAYS=$DIFF / 86400"
 let "HOURS=($DIFF - $DAYS * 86400) / 3600"
 
-if [ "$DAYS" -gt 0 ]; then
+if [ "$DAYS" -gt 3 ]; then
    	echo "${DAYS}d"
 	echo "${DAYS}d"
-	[ "$DAYS" -ge 2 ] && ( [ "$DAYS" -ge 5 ] && echo "#FF0000" || echo "#FFFF00" ) || echo "#FFFFFF"
+	[ "$DAYS" -ge 5 ] && ( [ "$DAYS" -ge 10 ] && echo "#FF0000" || echo "#FFFF00" ) || echo "#FFFFFF"
 fi

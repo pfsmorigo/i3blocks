@@ -5,11 +5,9 @@ complement() {
 		echo " ($(iwgetid -r))"
 	else
 		SPEED="$(cat /sys/class/net/$1/speed 2> /dev/null)"
-		GIGABIT=$(($SPEED/1000))
-
-		#echo -e "\n\n$MEGABIT | $GIGABIT\n\n"
 		if [ "$SPEED" ]; then
 			echo -n " ("
+			GIGABIT=$(($SPEED/1000))
 			[ $GIGABIT -gt 0 ] && echo -n "${GIGABIT}G" || echo -n "${SPEED}M"
 			echo -n ")"
 		fi
