@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if ! pgrep -a lsyncd > /dev/null; then
-	echo -e "lsyncd off\n\n#ff0000"
-	exit
+if [ -z "$(pgrep -af 'lsyncd.*lua')" ]; then
+	echo -e " sync off \n\n#ff0000"
+	exit 33
 fi
 
 LAST_SUCCESS=$(grep "Finished a list = 0" /tmp/lsyncd_$HOSTNAME.log 2> /dev/null | tail -n 1 | cut -d" " -f1-5)
