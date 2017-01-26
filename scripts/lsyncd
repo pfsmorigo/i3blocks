@@ -6,12 +6,13 @@ if [ -z "$(pgrep -af 'lsyncd.*lua')" ]; then
 fi
 
 LAST_SUCCESS=$(grep "Finished a list = 0" /tmp/lsyncd_$HOSTNAME.log 2> /dev/null | tail -n 1 | cut -d" " -f1-5)
-[ -z "$LAST_SUCCESS" ] && echo -e "?\n\n#ff0000" && exit
+[ -z "$LAST_SUCCESS" ] && echo -e " ? \n\n#ff0000" && exit 33
 
-let "SECONDS=$(date +%s) - $(date +%s -d "$LAST_SUCCESS")"
+SECONDS=$(( $(date +%s) - $(date +%s -d "$LAST_SUCCESS") ))
+[ "$SECONDS" -lt 60 ] && exit
 
-if [ $SECONDS -gt 60 ]; then
-	[ $SECONDS -gt 86000 ] && echo "+1d" || date +"+%kh%M" -u -d "@$SECONDS"
-	echo ""
-	[ $SECONDS -gt 600 ] && echo "#ff0000" || echo "#ffff00"
-fi
+[ $SECONDS -gt 86400 ] && echo " $(( $SECONDS / 86400 ))d "   && exit 33
+[ $SECONDS -gt  3600 ] && echo " $(( $SECONDS /  3600 ))h "   && exit 33
+[ $SECONDS -gt    60 ] && echo " $(( $SECONDS /    60 ))min " && exit 33
+
+
