@@ -1,0 +1,53 @@
+#!/bin/bash
+
+#wget -O /tmp/infomoney http://www.infomoney.com.br/fale-conosco
+
+
+COUNTER=1
+for INDEX in ibovespa nasdaq shanghai ifix dolar euro cdi poupanca; do
+	[ "$INDEX" != "poupanca" ] && GREP="li-$INDEX" || GREP="last-child"
+	RAW="$(grep -A 4 "$GREP" /tmp/infomoney)"
+	NAME[$COUNTER]=$INDEX
+	UPDATE[$COUNTER]=$(echo "$RAW" | grep "atualização:" \
+		| sed -e 's/.*: //;s/">//g')
+	DIFF[$COUNTER]=$(echo "$RAW" | grep "<br />" \
+		| sed -e 's/<br \/>/|/g;s/<[^>]*>//g' | tr -d '\r' | cut -d"|" -f2)
+	VALUE[$COUNTER]=$(echo "$RAW" | grep "<br />" \
+		| sed -e 's/<br \/>/|/g;s/<[^>]*>//g' | tr -d '\r' | cut -d"|" -f3)
+	COUNTER=$((COUNTER+1))
+done
+
+# So far you have a structure like this:
+# NAME[0]="ibovespa"
+# UPDATE[0]="26/01 18:05"
+# DIFF[0]="+0,66%"
+# VALUE[0]="66.276 pts"
+
+OUTPUT=
+for INDEX in $(seq $(( $COUNTER - 1 ))); do
+	VARIATON=$(( $(echo ${DIFF[$INDEX]} | cut -d, -f1) + 1 ))
+	[ "$VARIATON" -gt  1 ] && OUTPUT+="<span foreground="#0000FF">"
+	[ "$VARIATON" -lt -1 ] && OUTPUT+="<span foreground="#FF0000">"
+
+	case ${NAME[$INDEX]} in
+		ibovespa) OUTPUT+="BVP " ;;
+		nasdaq)   OUTPUT+="NSQ " ;;
+		shanghai) OUTPUT+="SGA " ;;
+		ifix)     OUTPUT+="IFX " ;;
+		dolar)    OUTPUT+="USD " ;;
+		euro)     OUTPUT+="EUR " ;;
+		cdi)      OUTPUT+="CDI " ;;
+		poupanca) OUTPUT+="POU " ;;
+	esac
+
+	case ${NAME[$INDEX]} in
+		ibovespa|nasdaq|shanghai|ifix|dolar|euro)
+			OUTPUT+="${VALUE[$INDEX]} (${DIFF[$INDEX]})";;
+		cdi|poupanca)
+			OUTPUT+="${DIFF[$INDEX]}";;
+	esac
+	[ "$VARIATON" -gt 1 -o "$VARIATON" -lt -1 ] && OUTPUT+="</span>"
+	OUTPUT+=" | "
+done
+
+echo "$OUTPUT" | sed -e "s/ | $//g"
