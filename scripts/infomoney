@@ -28,7 +28,7 @@ DIFF=$(grep -A 4 "$GREP" $TMPFILE | grep "<br />" \
 		| sed -e 's/<br \/>/|/g;s/<[^>]*>//g' \
 		| tr -d '\r' | cut -d"|" -f2)
 VALUE=$(grep -A 4 "$GREP" $TMPFILE | grep "<br />" \
-		| sed -e 's/<br \/>/|/g;s/<[^>]*>//g;s/R$ //g' \
+		| sed -e 's/<br \/>/|/g;s/<[^>]*>//g;s/R$ //g;s/ pts//g' \
 		| tr -d '\r' | cut -d"|" -f3)
 VARIATION=$(echo "${DIFF%\%*} * 100" | tr ',' '.' | tr -d '+' | bc)
 
