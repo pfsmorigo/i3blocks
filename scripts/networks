@@ -1,49 +1,59 @@
 #!/bin/bash
 
-complement() {
-	if [ "$(iwgetid | cut -d' ' -f1)" = "$1" ]; then
-		echo " ($(iwgetid -r))"
-	else
-		SPEED="$(cat /sys/class/net/$1/speed 2> /dev/null)"
-		if [ "$SPEED" ]; then
-			echo -n " ("
-			GIGABIT=$(($SPEED/1000))
-			[ $GIGABIT -gt 0 ] && echo -n "${GIGABIT}G" || echo -n "${SPEED}M"
-			echo -n ")"
-		fi
-	fi
-}
-
 FULL_TEXT=
 SHORT_TEXT=
 COLOR=
+EXITCODE=0
+
+HOST_TO_TEST=registro.br
+LOG=/tmp/check_network
 
 OLDIFS=$IFS
 IFS=$'\n'
 for IF in $(ip -o -4 a); do
 	NAME=$(echo $IF | awk '{ print $2 }')
-	IP_F=$(echo $IF | awk '{ print $4 }')
-	IP_S=$(echo $IP_F | cut -d/ -f1)
-
 	case $NAME in
 		lo|virbr*|docker*) continue ;;
-		em*)         ICON= ;; # ethernet
-		enp0s26u1u2) ICON= ;; # usb
-		tun*)        ICON= ;; # tunnel
-		wlp3s0)      ICON= ;; # wireless
-		*)           ICON= ;; # others
 	esac
-	FULL_TEXT+="$IP_F$(complement $NAME)   "
-	SHORT_TEXT+="$IP_S   "
+
+	if [ "$(iwgetid | cut -d' ' -f1)" = "$NAME" ]; then
+		SUFFIX=" ($(iwgetid -r))"
+	else
+		SPEED="$(cat /sys/class/net/$NAME/speed 2> /dev/null | bc)"
+		[ $SPEED -gt 1000 ] \
+			&& SUFFIX=" ($(( $SPEED/1000 ))G)" || SUFFIX=" (${SPEED}M)"
+	fi
+
+	IP=$(echo $IF | awk '{ print $4 }')
+	SHORT_TEXT+="$(echo $IP | cut -d/ -f1)   "
+	FULL_TEXT+="${IP}${SUFFIX}   "
 done
 IFS=$OLDIFS
 
-if [ -z "$(echo $FULL_TEXT | xargs)" ]; then
-   #echo "no networks"
-   #exit 33
-   echo ""
+FULL_TEXT=$(echo "$FULL_TEXT" | sed 's/^ *//; s/ *$//')
+SHORT_TEXT=$(echo "$SHORT_TEXT" | sed 's/^ *//; s/ *$//')
+
+if ! ping -c 1 -W 5 $HOST_TO_TEST > /dev/null 2>&1; then
+	[ ! -f "$LOG" ] && date +%s > $LOG
+
+	DIFF=$(echo $(( $(date +%s) - $(cat $LOG) )) | bc)
+	if   [ $DIFF -gt 86400 ]; then TIME="$(( $DIFF / 86400 ))d"
+	elif [ $DIFF -gt  3600 ]; then TIME="$(( $DIFF /  3600 ))h"
+	elif [ $DIFF -gt    60 ]; then TIME="$(( $DIFF /    60 ))min"
+	else TIME="${DIFF}s"; fi
+
+	if [ -z "$(echo $FULL_TEXT | xargs)" ]; then
+		FULL_TEXT=" No Network ($TIME) "
+		EXITCODE=33
+	else
+		FULL_TEXT="$TIME  $FULL_TEXT"
+		COLOR=#ff0000
+	fi
+else
+	[ -f "$LOG" ] && rm $LOG
 fi
 
-echo "$FULL_TEXT" | sed 's/^ *//; s/ *$//'
-echo "$SHORT_TEXT" | sed 's/^ *//; s/ *$//'
+echo "$FULL_TEXT"
+echo "$SHORT_TEXT"
 echo "$COLOR"
+exit $EXITCODE
