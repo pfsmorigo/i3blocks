@@ -1,15 +1,17 @@
 #!/bin/bash
 
-if [ -z "$(pgrep -af 'lsyncd.*lua')" ]; then
-	echo -e " sync off \n\n#ff0000"
+LOG=/var/log/lsyncd.log
+
+if [ -z "$(pgrep -a 'lsyncd')" ]; then
+	echo -e " off \n\n#ff0000"
 	exit 33
 fi
 
-LAST_SUCCESS=$(grep "Finished a list = 0" /tmp/lsyncd_$HOSTNAME.log 2> /dev/null | tail -n 1 | cut -d" " -f1-5)
+LAST_SUCCESS=$(grep "Finished a list" $LOG 2> /dev/null | tail -n 1 | cut -d" " -f1-5)
 [ -z "$LAST_SUCCESS" ] && echo -e " ? \n\n#ff0000" && exit 33
 
 SECONDS=$(( $(date +%s) - $(date +%s -d "$LAST_SUCCESS") ))
-[ "$SECONDS" -lt 60 ] && exit
+[ $SECONDS -lt   600 ] && exit
 
 [ $SECONDS -gt 86400 ] && echo " $(( $SECONDS / 86400 ))d "   && exit 33
 [ $SECONDS -gt  3600 ] && echo " $(( $SECONDS /  3600 ))h "   && exit 33
